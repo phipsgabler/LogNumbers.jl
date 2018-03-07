@@ -1,30 +1,45 @@
-import Base: show
+import Base
 
 module LogNumbers
 
 mutable struct LogNumber{F<:AbstractFloat} <: AbstractFloat
     log::F
 
-    LogNumber{T}() where T<:AbstractFloat = new{T}()
     LogNumber{T}(x::T) where T<:AbstractFloat = new{T}(x)
 end
 
-Log{F<:AbstractFloat}(x::F) = LogNumber{F}(log(x))
-Log{T<:Real}(x::T) = Log(float(x))
-# Log(x::Irrational{:e}) = LogNumber(0.0)
+LogNumber(x::F) where {F<:AbstractFloat} = LogNumber{F}(x)
+LogNumber(x::Real) = LogNumber(float(x))
 
-fromlog{F<:AbstractFloat}(logx::F) = LogNumber{F}(logx)
-fromlog{T<:Real}(logx::T) = fromlog(float(logx))
+Base.convert(::Type{LogNumber{F}}, x::LogNumber) where {F<:AbstractFloat} = LogNumber(convert(F, x.log))
+Base.convert(lt::Type{LogNumber{F}}, x::Real) where {T<:AbstractFloat} = LogNumber(float(x))
+
+Base.promote_rule(::Type{LogNumber{T}}, ::Type{LogNumber{S}}) where {T<:AbstractFloat,S<:AbstractFloat} = LogNumber{promote_type(T,S)}
+Base.promote_rule(::Type{LogNumber{T}}, ::Type{S}) where {T<:AbstractFloat,S<:Real} = LogNumber{promote_type(T, S)}
 
 Base.show(io::IO, x::LogNumber) = print(io, "exp(", x.log, ")")
+
+
+Log(x::Real) = LogNumber(log(x))
 
 isneginf(x) = isinf(x) && x < zero(x)
 
 # https://en.wikipedia.org/wiki/Log_probability
 function Base.:+{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F})
-    isneginf(x) && return x
+    isneginf(x.log) && return x
     LogNumber{F}(x.log + log1p(exp(y.log - x.log)))
 end
+
+function Base.:-{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F})
+    isneginf(x.log) && return x
+    LogNumber{F}(x.log + log1p(-exp(y.log - x.log)))
+end
+
+Base.:*{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F}) = LogNumber{F}(x.log + y.log)
+Base.:/{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F}) = LogNumber{F}(x.log - y.log)
+
+# function Base.mapreduce(::typeof(+), op, v0, itr)
+# end
 
 # http://www.nowozin.net/sebastian/blog/streaming-log-sum-exp-computation.html
 function logsumexp_stream(X)
@@ -43,17 +58,6 @@ function logsumexp_stream(X)
     log(r) + α
 end
 
-# convert(::Type{Rational{T}}, x::Rational) where {T<:Integer} = Rational(convert(T,x.num),convert(T,x.den))
-# convert(::Type{Rational{T}}, x::Integer) where {T<:Integer} = Rational(convert(T,x), convert(T,1))
-
-# convert(rt::Type{Rational{T}}, x::AbstractFloat) where {T<:Integer} = convert(rt,x,eps(x))
-
-# convert(::Type{T}, x::Rational) where {T<:AbstractFloat} = convert(T,x.num)/convert(T,x.den)
-# convert(::Type{T}, x::Rational) where {T<:Integer} = div(convert(T,x.num),convert(T,x.den))
-
-# promote_rule(::Type{Rational{T}}, ::Type{S}) where {T<:Integer,S<:Integer} = Rational{promote_type(T,S)}
-# promote_rule(::Type{Rational{T}}, ::Type{Rational{S}}) where {T<:Integer,S<:Integer} = Rational{promote_type(T,S)}
-# promote_rule(::Type{Rational{T}}, ::Type{S}) where {T<:Integer,S<:AbstractFloat} = promote_type(T,S)
 
 export Log
 
