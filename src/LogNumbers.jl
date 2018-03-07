@@ -12,7 +12,7 @@ LogNumber(x::F) where {F<:AbstractFloat} = LogNumber{F}(x)
 LogNumber(x::Real) = LogNumber(float(x))
 
 Base.convert(::Type{LogNumber{F}}, x::LogNumber) where {F<:AbstractFloat} = LogNumber(convert(F, x.log))
-Base.convert(lt::Type{LogNumber{F}}, x::Real) where {T<:AbstractFloat} = LogNumber(float(x))
+Base.convert(lt::Type{LogNumber{F}}, x::Real) where {F<:AbstractFloat} = LogNumber(float(x))
 
 Base.promote_rule(::Type{LogNumber{T}}, ::Type{LogNumber{S}}) where {T<:AbstractFloat,S<:AbstractFloat} = LogNumber{promote_type(T,S)}
 Base.promote_rule(::Type{LogNumber{T}}, ::Type{S}) where {T<:AbstractFloat,S<:Real} = LogNumber{promote_type(T, S)}
@@ -38,24 +38,35 @@ end
 Base.:*{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F}) = LogNumber{F}(x.log + y.log)
 Base.:/{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F}) = LogNumber{F}(x.log - y.log)
 
-# function Base.mapreduce(::typeof(+), op, v0, itr)
-# end
+Base.:<(x::LogNumber, y::LogNumber) = x.log < y.log
+Base.:<=(x::LogNumber, y::LogNumber) = x.log <= y.log
+Base.less(x::LogNumber, y::LogNumber) = less(x.log, y.log)
+
 
 # http://www.nowozin.net/sebastian/blog/streaming-log-sum-exp-computation.html
+# https://www.xarg.org/2016/06/the-log-sum-exp-trick-in-machine-learning/
 function logsumexp_stream(X)
     α = -Inf
     r = 0.0
     
     for x in X
-        if x <= α
-            r += exp(x - α)
+        if x.log <= α
+            r += exp(x.log - α)
         else
-            r *= exp(α - x)
+            r *= exp(α - x.log)
             r += 1.0
-            α = x
+            α = x.log
         end
     end
-    log(r) + α
+    @show r, α
+    Log(r) + α
+end
+
+function logsumexp_stream2(X)
+    α = maximum(X).log
+    s = sum(exp(x.log - α) for x in X)
+    @show s, α
+    Log(s) + α
 end
 
 
