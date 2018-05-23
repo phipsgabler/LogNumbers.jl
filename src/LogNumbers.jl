@@ -24,9 +24,11 @@ const LogZero32 = LogNumber{Float32}(-Inf32)
 const LogZero = LogZero64
 
 Base.zero(::Type{LogNumber{Float64}}) = LogZero64
+Base.zero(::LogNumber{Float64}) = LogZero64
 Base.zero(::Type{LogNumber{Float32}}) = LogZero32
-Base.one(::Type{LogNumber{Float64}}) = LogNumber{Float64}(1e0)
-Base.one(::Type{LogNumber{Float32}}) = LogNumber{Float32}(1f0)
+Base.zero(::LogNumber{Float32}) = LogZero32
+Base.one(::Type{LogNumber{Float64}}) = LogNumber{Float64}(0e0)
+Base.one(::Type{LogNumber{Float32}}) = LogNumber{Float32}(0f0)
 
 Base.reinterpret(::Type{LogNumber{F}}, x::F) where {F} = LogNumber{F}(x)
 
@@ -54,6 +56,9 @@ Base.show(io::IO, x::LogNumber{F}) where {F} = print(io, "LogNumber{", F, "}(", 
 
 
 isneginf(x) = isinf(x) && x < zero(x)
+
+Base.:(==)(x::LogNumber, y::LogNumber) = x.log == y.log
+Base.isequal(x::LogNumber, y::LogNumber) = isequal(x.log, y.log)
 
 Base.isapprox(x::LogNumber, y::LogNumber; args...) = isapprox(x.log, y.log; args...)
 

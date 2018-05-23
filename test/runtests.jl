@@ -22,10 +22,15 @@ using Base.Test
     # promote(32f1, Log(32e1))
 end
 
-@testset "Basic arithmetic" begin
+@testset "Constants, equality" begin
+    @test LogZero == LogNumber{Float64}(-Inf) == Log(0) == zero(LogNumber{Float64})
+    @test Log(1) == LogNumber{Float64}(0.0) == one(LogNumber{Float64})
+end
+
+@testset "Addition, subtraction" begin
     @test Log(32) + Log(32) ≈ Log(64)
     @test Log(0) + LogZero ≈ LogZero
-    # @test Log(32) - LogZero ≈ LogZero
+    @test Log(32) - LogZero ≈ Log(32)
     @test Log(32) - Log(30) ≈ Log(2)
     @test Log(32) - Log(32) ≈ LogZero
 end
