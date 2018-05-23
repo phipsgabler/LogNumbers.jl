@@ -2,8 +2,7 @@ import Base
 
 module LogNumbers
 
-export LogNumber, Log,
-    floattype, isneginf,
+export LogNumber, Log, floattype,
     LogZero, LogZero32, LogZero64
 
 
@@ -12,6 +11,9 @@ mutable struct LogNumber{F<:AbstractFloat} <: AbstractFloat
 
     LogNumber{T}(x::T) where {T<:AbstractFloat} = new{T}(x)
 end
+
+LogNumber(x::F) where {F<:AbstractFloat} = LogNumber{F}(x)
+LogNumber(x) = LogNumber(float(x))
 
 Log(x::F) where {F<:AbstractFloat} = LogNumber{F}(log(x))
 Log(x::Real) = Log(float(x))
@@ -33,7 +35,7 @@ Base.one(::Type{LogNumber{Float32}}) = LogNumber{Float32}(0f0)
 Base.reinterpret(::Type{LogNumber{F}}, x::F) where {F} = LogNumber{F}(x)
 
 Base.convert(::Type{LogNumber{F}}, x::LogNumber) where {F} = LogNumber{F}(convert(F, x.log))
-Base.convert(::Type{LogNumber{F}}, x::Real) where {F} = LogNumber{F}(convert(F, x))
+Base.convert(::Type{LogNumber{F}}, x::Real) where {F} = LogNumber{F}(log(convert(F, x)))
 Base.convert(::Type{T}, x::LogNumber) where {T} = convert(T, exp(x.log))
 
 Base.promote_rule(::Type{LogNumber{T}}, ::Type{LogNumber{S}}) where {T, S} = LogNumber{promote_type(T, S)}
@@ -54,9 +56,6 @@ Base.show(io::IO, x::LogNumber{F}) where {F} = print(io, "LogNumber{", F, "}(", 
 #     end
 # end
 
-
-isneginf(x) = isinf(x) && x < zero(x)
-
 Base.:(==)(x::LogNumber, y::LogNumber) = x.log == y.log
 Base.isequal(x::LogNumber, y::LogNumber) = isequal(x.log, y.log)
 
@@ -69,12 +68,12 @@ Base.less(x::LogNumber, y::LogNumber) = less(x.log, y.log)
 
 # https://en.wikipedia.org/wiki/LogNumber_probability
 function Base.:+{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F})
-    isneginf(x.log) && return x
+    iszero(x) && return x
     LogNumber{F}(x.log + log1p(exp(y.log - x.log)))
 end
 
 function Base.:-{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F})
-    isneginf(x.log) && return x
+    iszero(x) && return x
     LogNumber{F}(x.log + log1p(-exp(y.log - x.log)))
 end
 
