@@ -2,42 +2,72 @@ import Base
 
 module LogNumbers
 
-mutable struct Log{F<:AbstractFloat} <: AbstractFloat
+export LogNumber, Log,
+    floattype, isneginf
+
+
+mutable struct LogNumber{F<:AbstractFloat} <: AbstractFloat
     log::F
 
-    # Log{T}(x::T) where T<:AbstractFloat = new{T}(x)
+    LogNumber{T}(x::T) where {T<:AbstractFloat} = new{T}(x)
 end
 
-Log(x::F) where {F<:AbstractFloat} = Log{F}(x)
+Log(x::F) where {F<:AbstractFloat} = LogNumber{F}(log(x))
 Log(x::Real) = Log(float(x))
 
-Base.convert(::Type{Log{F}}, x::Log) where {F<:AbstractFloat} = Log(convert(F, x.log))
-Base.convert(lt::Type{Log{F}}, x::Real) where {F<:AbstractFloat} = Log(float(x))
+floattype(::Type{LogNumber{F}}) where F = F
+floattype(::LogNumber{F}) where F = F
 
-Base.promote_rule(::Type{Log{T}}, ::Type{Log{S}}) where {T<:AbstractFloat, S<:AbstractFloat} = Log{promote_type(T, S)}
-Base.promote_rule(::Type{Log{T}}, ::Type{S}) where {T<:AbstractFloat, S<:Real} = Log{promote_type(T, S)}
 
-Base.show(io::IO, x::Log) = print(io, "exp(", x.log, ")")
+Base.reinterpret(::Type{LogNumber{F}}, x::F) where {F} = LogNumber{F}(x)
+
+Base.convert(::Type{LogNumber{F}}, x::LogNumber) where {F} = LogNumber{F}(convert(F, x.log))
+Base.convert(::Type{LogNumber{F}}, x::Real) where {F} = LogNumber{F}(convert(F, x))
+Base.convert(::Type{T}, x::LogNumber) where {T} = convert(T, exp(x.log))
+
+Base.promote_rule(::Type{LogNumber{T}}, ::Type{LogNumber{S}}) where {T, S} = LogNumber{promote_type(T, S)}
+Base.promote_rule(::Type{LogNumber{T}}, ::Type{S}) where {T, S<:Real} = LogNumber{promote_type(T, S)}
+
+Base.show(io::IO, x::LogNumber{F}) where {F} = print(io, "LogNumber{", F, "}(", x.log, ")")
+
+# Base.show(io::IO, x::LogNumber{<:Union{Float32,Float64}}) = print(io, "log\"", exp(x.log), "\"")
+# FLOAT32_LIT = r"[+-]?[0-9]+([.][0-9]*)?[f][0-9]+"
+# FLOAT64_LIT = r"[+-]?[0-9]+((([.][0-9]*)?[e][0-9]+)|([.][0-9]*))"
+# macro log_str(s)
+#     if ismatch(FLOAT64_LIT, s)
+#         :(Log(parse(Float64, $s)))
+#     elseif ismatch(FLOAT32_LIT, s)
+#         :(Log(parse(Float32, $s)))
+#     else
+#         error("Illegal floating point literal $s")
+#     end
+# end
+
 
 isneginf(x) = isinf(x) && x < zero(x)
 
-# https://en.wikipedia.org/wiki/Log_probability
-function Base.:+{F<:AbstractFloat}(x::Log{F}, y::Log{F})
+Base.isapprox(x::LogNumber, y::LogNumber; args...) = isapprox(x.log, y.log; args...)
+
+Base.:<(x::LogNumber, y::LogNumber) = x.log < y.log
+Base.:<=(x::LogNumber, y::LogNumber) = x.log <= y.log
+Base.less(x::LogNumber, y::LogNumber) = less(x.log, y.log)
+
+
+# https://en.wikipedia.org/wiki/LogNumber_probability
+function Base.:+{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F})
     isneginf(x.log) && return x
-    Log{F}(x.log + log1p(exp(y.log - x.log)))
+    LogNumber{F}(x.log + log1p(exp(y.log - x.log)))
 end
 
-function Base.:-{F<:AbstractFloat}(x::Log{F}, y::Log{F})
+function Base.:-{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F})
     isneginf(x.log) && return x
-    Log{F}(x.log + log1p(-exp(y.log - x.log)))
+    LogNumber{F}(x.log + log1p(-exp(y.log - x.log)))
 end
 
-Base.:*{F<:AbstractFloat}(x::Log{F}, y::Log{F}) = Log{F}(x.log + y.log)
-Base.:/{F<:AbstractFloat}(x::Log{F}, y::Log{F}) = Log{F}(x.log - y.log)
+Base.:*{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F}) = LogNumber{F}(x.log + y.log)
+Base.:/{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F}) = LogNumber{F}(x.log - y.log)
 
-Base.:<(x::Log, y::Log) = x.log < y.log
-Base.:<=(x::Log, y::Log) = x.log <= y.log
-Base.less(x::Log, y::Log) = less(x.log, y.log)
+
 
 
 # http://www.nowozin.net/sebastian/blog/streaming-log-sum-exp-computation.html
@@ -56,17 +86,14 @@ function logsumexp_stream(X)
         end
     end
     @show r, α
-    Log(r) + α
+    LogNumber(r) + α
 end
 
 function logsumexp_stream2(X)
     α = maximum(X).log
     s = sum(exp(x.log - α) for x in X)
     @show s, α
-    Log(s) + α
+    LogNumber(s) + α
 end
-
-
-export Log
 
 end
