@@ -2,45 +2,42 @@ import Base
 
 module LogNumbers
 
-mutable struct LogNumber{F<:AbstractFloat} <: AbstractFloat
+mutable struct Log{F<:AbstractFloat} <: AbstractFloat
     log::F
 
-    LogNumber{T}(x::T) where T<:AbstractFloat = new{T}(x)
+    # Log{T}(x::T) where T<:AbstractFloat = new{T}(x)
 end
 
-LogNumber(x::F) where {F<:AbstractFloat} = LogNumber{F}(x)
-LogNumber(x::Real) = LogNumber(float(x))
+Log(x::F) where {F<:AbstractFloat} = Log{F}(x)
+Log(x::Real) = Log(float(x))
 
-Base.convert(::Type{LogNumber{F}}, x::LogNumber) where {F<:AbstractFloat} = LogNumber(convert(F, x.log))
-Base.convert(lt::Type{LogNumber{F}}, x::Real) where {F<:AbstractFloat} = LogNumber(float(x))
+Base.convert(::Type{Log{F}}, x::Log) where {F<:AbstractFloat} = Log(convert(F, x.log))
+Base.convert(lt::Type{Log{F}}, x::Real) where {F<:AbstractFloat} = Log(float(x))
 
-Base.promote_rule(::Type{LogNumber{T}}, ::Type{LogNumber{S}}) where {T<:AbstractFloat,S<:AbstractFloat} = LogNumber{promote_type(T,S)}
-Base.promote_rule(::Type{LogNumber{T}}, ::Type{S}) where {T<:AbstractFloat,S<:Real} = LogNumber{promote_type(T, S)}
+Base.promote_rule(::Type{Log{T}}, ::Type{Log{S}}) where {T<:AbstractFloat, S<:AbstractFloat} = Log{promote_type(T, S)}
+Base.promote_rule(::Type{Log{T}}, ::Type{S}) where {T<:AbstractFloat, S<:Real} = Log{promote_type(T, S)}
 
-Base.show(io::IO, x::LogNumber) = print(io, "exp(", x.log, ")")
-
-
-Log(x::Real) = LogNumber(log(x))
+Base.show(io::IO, x::Log) = print(io, "exp(", x.log, ")")
 
 isneginf(x) = isinf(x) && x < zero(x)
 
 # https://en.wikipedia.org/wiki/Log_probability
-function Base.:+{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F})
+function Base.:+{F<:AbstractFloat}(x::Log{F}, y::Log{F})
     isneginf(x.log) && return x
-    LogNumber{F}(x.log + log1p(exp(y.log - x.log)))
+    Log{F}(x.log + log1p(exp(y.log - x.log)))
 end
 
-function Base.:-{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F})
+function Base.:-{F<:AbstractFloat}(x::Log{F}, y::Log{F})
     isneginf(x.log) && return x
-    LogNumber{F}(x.log + log1p(-exp(y.log - x.log)))
+    Log{F}(x.log + log1p(-exp(y.log - x.log)))
 end
 
-Base.:*{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F}) = LogNumber{F}(x.log + y.log)
-Base.:/{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F}) = LogNumber{F}(x.log - y.log)
+Base.:*{F<:AbstractFloat}(x::Log{F}, y::Log{F}) = Log{F}(x.log + y.log)
+Base.:/{F<:AbstractFloat}(x::Log{F}, y::Log{F}) = Log{F}(x.log - y.log)
 
-Base.:<(x::LogNumber, y::LogNumber) = x.log < y.log
-Base.:<=(x::LogNumber, y::LogNumber) = x.log <= y.log
-Base.less(x::LogNumber, y::LogNumber) = less(x.log, y.log)
+Base.:<(x::Log, y::Log) = x.log < y.log
+Base.:<=(x::Log, y::Log) = x.log <= y.log
+Base.less(x::Log, y::Log) = less(x.log, y.log)
 
 
 # http://www.nowozin.net/sebastian/blog/streaming-log-sum-exp-computation.html
