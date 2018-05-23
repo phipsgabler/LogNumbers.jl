@@ -66,13 +66,15 @@ Base.:<=(x::LogNumber, y::LogNumber) = x.log <= y.log
 Base.less(x::LogNumber, y::LogNumber) = less(x.log, y.log)
 
 
-# https://en.wikipedia.org/wiki/LogNumber_probability
+# https://en.wikipedia.org/wiki/Log_probability
 function Base.:+{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F})
+    y, x = minmax(x, y)
     iszero(x) && return x
     LogNumber{F}(x.log + log1p(exp(y.log - x.log)))
 end
 
 function Base.:-{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F})
+    y, x = minmax(x, y)
     iszero(x) && return x
     LogNumber{F}(x.log + log1p(-exp(y.log - x.log)))
 end

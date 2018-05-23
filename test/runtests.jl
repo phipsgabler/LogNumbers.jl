@@ -30,9 +30,12 @@ end
 @testset "Addition, subtraction" begin
     # pure
     @test Log(32) + Log(32) ≈ Log(64)
-    @test Log(0) + LogZero ≈ LogZero
-    @test Log(32) - LogZero ≈ Log(32)
+    @test LogZero + Log(32) ≈ Log(32)
+    @test Log(32) + LogZero ≈ Log(32)
+    @test LogZero + LogZero ≈ LogZero
+    
     @test Log(32) - Log(30) ≈ Log(2)
+    @test Log(32) - LogZero ≈ Log(32)
     @test Log(32) - Log(32) ≈ LogZero
 
     # mixed
