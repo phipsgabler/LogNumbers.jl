@@ -21,3 +21,11 @@ using Base.Test
     # promote(Log(32f1), 32e1)
     # promote(32f1, Log(32e1))
 end
+
+@testset "Basic arithmetic" begin
+    @test Log(32) + Log(32) ≈ Log(64)
+    @test Log(0) + LogZero ≈ LogZero
+    # @test Log(32) - LogZero ≈ LogZero
+    @test Log(32) - Log(30) ≈ Log(2)
+    @test Log(32) - Log(32) ≈ LogZero
+end

@@ -3,7 +3,8 @@ import Base
 module LogNumbers
 
 export LogNumber, Log,
-    floattype, isneginf
+    floattype, isneginf,
+    LogZero, LogZero32, LogZero64
 
 
 mutable struct LogNumber{F<:AbstractFloat} <: AbstractFloat
@@ -18,6 +19,14 @@ Log(x::Real) = Log(float(x))
 floattype(::Type{LogNumber{F}}) where F = F
 floattype(::LogNumber{F}) where F = F
 
+const LogZero64 = LogNumber{Float64}(-Inf64)
+const LogZero32 = LogNumber{Float32}(-Inf32)
+const LogZero = LogZero64
+
+Base.zero(::Type{LogNumber{Float64}}) = LogZero64
+Base.zero(::Type{LogNumber{Float32}}) = LogZero32
+Base.one(::Type{LogNumber{Float64}}) = LogNumber{Float64}(1e0)
+Base.one(::Type{LogNumber{Float32}}) = LogNumber{Float32}(1f0)
 
 Base.reinterpret(::Type{LogNumber{F}}, x::F) where {F} = LogNumber{F}(x)
 
