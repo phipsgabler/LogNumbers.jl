@@ -77,13 +77,14 @@ There are a number of ways to construct a `LogNumber`:
 - `LogNumber(0.1)`, and `LogNumber{Float64}(0.1)` construct a `LogNumber{Float64}` containing the
   value 0.1, as in log-space.  `reinterpret` is also specialized for this.
 - `Log(0.1)`, `Log(Float64, 0.1)`, and `log"0.1"` construct a `LogNumber{Float64}` containing
-  log(0.1) ≈ -2.3025; i.e., they transform to log space.  The string macro `@loc_str` understands
+  log(0.1) ≈ -2.3025; i.e., they transform to log space.  The string macro `@log_str` understands
   Julia decimal `Float32` and `Float64` literals, and is used for printing, if possible.  `convert`
-  can be used as well.
+  can be used as well to transform from normal to log space.
 - There are constants for `LogZero`, `LogNaN`, and `LogInf`, and their explicit 32 and 64 bit
   variants `LogZero32` etc.  Also `one` and `zero` are overloaded accordingly.
-- `convert` and `promote` are overloaded to perform automatically transform to log space, so that
-  e.g., `log"0.1" + 0.2` results in `log"0.30000000000000004"`.
+
+`convert` and `promote` are overloaded to perform automatically transform to log space, so that
+e.g., `log"0.1" + 0.2` results in `log"0.30000000000000004"`.
   
 To access the values in `LogNumber`, you can use `float` or `convert` to get back thevalue in the
 normal domain, or `floatvalue` or the field `log` to access the value in log space, if that should
