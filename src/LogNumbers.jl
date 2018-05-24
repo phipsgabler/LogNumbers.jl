@@ -30,6 +30,8 @@ Log(::Type{F}, x) where F = Log(convert(F, x))
 floattype(::Type{LogNumber{F}}) where F = F
 floattype(::LogNumber{F}) where F = F
 
+logvalue(x::LogNumber) = x.log
+
 Base.reinterpret(::Type{LogNumber{F}}, x::F) where {F} = LogNumber{F}(x)
 
 Base.convert(::Type{LogNumber{F}}, x::LogNumber) where {F} = LogNumber{F}(convert(F, x.log))
@@ -97,45 +99,30 @@ Base.:/{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F}) = LogNumber{F}(x.log
 
 
 infty(::Type{T}) where {T} = one(T) / zero(T)
-infty(::T) where {T} = infty(typeof(T))
+infty(::T) where {T} = infty(T)
 
 # http://www.nowozin.net/sebastian/blog/streaming-log-sum-exp-computation.html
 # https://www.xarg.org/2016/06/the-log-sum-exp-trick-in-machine-learning/
 logsumexp(xs) = logsumexp(xs, eltype(xs))
-logsumexp(xs, ::Type{T}) where {T<:LogNumber} = logsumexp_ln(xs, floattype(T))
-function logsumexp_ln(xs, ::Type{F}) where F
-    α = -infty(F)
-    r = zero(F)
-    
-    for x in xs
-        x′ = x.log
-        if x′ <= α
-            r += exp(x′ - α)
-        else
-            r *= exp(α - x′)
-            r += one(F)
-            α = x′
-        end
-    end
 
+function logsumexp(xs, ::Type{LogNumber{F}}) where {F}
+    α, r = mapfoldr(logvalue, expsum_update, (-infty(F), zero(F)), xs)
     LogNumber(log(r) + α)
 end
 
 function logsumexp(xs, ::Type{F}) where {F}
-    α = -infty(F)
-    r = zero(F)
-    
-    for x′ in xs
-        if x′ <= α
-            r += exp(x′ - α)
-        else
-            r *= exp(α - x′)
-            r += one(F)
-            α = x′
-        end
-    end
-
+    α, r = mapfoldr(identity, expsum_update, (-infty(F), zero(F)), xs)
     log(r) + α
+end
+
+function expsum_update(x, acc)
+    α, r = acc
+    
+    if x <= α
+        return (α, r + exp(x - α))
+    else
+        return (x, r * exp(α - x) + one(r))
+    end
 end
 
 include("literal_macro.jl")

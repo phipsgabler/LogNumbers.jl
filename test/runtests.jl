@@ -96,9 +96,9 @@ end
         log(r) + α
     end
 
+    l1, l2, l3, l4, l5 = [0], [1], [42], 1:1000, 1 ./ (1:1000)
     @test isequal((logsumexp(Log.([0]))).log, logsumexp_naive(log.([0])))
-    @test (logsumexp(Log.([1]))).log ≈ logsumexp_naive(log.([1]))
-    @test (logsumexp(Log.([1, 2, 3]))).log ≈ logsumexp_naive(log.([1, 2, 3]))
-    @test (logsumexp(Log.(1:1000))).log ≈ logsumexp_naive(log.(1:1000))
-    @test (logsumexp(Log.(1 ./ (1:1000)))).log ≈ logsumexp_naive(log.(1 ./ (1:1000)))
+    for l in [l2, l3, l4, l5]
+        @test (logsumexp(Log.(l))).log ≈ logsumexp(log.(l)) ≈ logsumexp_naive(log.(l))
+    end
 end
