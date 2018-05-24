@@ -22,9 +22,13 @@ using Base.Test
     # promote(32f1, Log(32e1))
 end
 
-@testset "Constants, equality" begin
+@testset "Constants, literals, equality" begin
     @test LogZero == LogNumber{Float64}(-Inf) == Log(0) == zero(LogNumber{Float64})
     @test Log(1) == LogNumber{Float64}(0.0) == one(LogNumber{Float64})
+
+    @test log"32" == Log(32)
+    @test log"32e1" == Log(32e1)
+    @test log"32f1" == Log(32f1)
 end
 
 @testset "Addition, subtraction" begin

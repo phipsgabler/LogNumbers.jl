@@ -15,8 +15,13 @@ end
 LogNumber(x::F) where {F<:AbstractFloat} = LogNumber{F}(x)
 LogNumber(x) = LogNumber(float(x))
 
+Base.show(io::IO, x::LogNumber{<:Union{Float32,Float64}}) = print(io, "log", '\"', exp(x.log), '\"')
+Base.show(io::IO, x::LogNumber{F}) where {F} = print(io, "Log(", F, ", ", exp(x.log), ")")
+
+
 Log(x::F) where {F<:AbstractFloat} = LogNumber{F}(log(x))
-Log(x::Real) = Log(float(x))
+Log(x) = Log(float(x))
+Log(::Type{F}, x) where F = Log(convert(F, x))
 
 floattype(::Type{LogNumber{F}}) where F = F
 floattype(::LogNumber{F}) where F = F
@@ -41,20 +46,6 @@ Base.convert(::Type{T}, x::LogNumber) where {T} = convert(T, exp(x.log))
 Base.promote_rule(::Type{LogNumber{T}}, ::Type{LogNumber{S}}) where {T, S} = LogNumber{promote_type(T, S)}
 Base.promote_rule(::Type{LogNumber{T}}, ::Type{S}) where {T, S<:Real} = LogNumber{promote_type(T, S)}
 
-Base.show(io::IO, x::LogNumber{F}) where {F} = print(io, "LogNumber{", F, "}(", x.log, ")")
-
-# Base.show(io::IO, x::LogNumber{<:Union{Float32,Float64}}) = print(io, "log\"", exp(x.log), "\"")
-# FLOAT32_LIT = r"[+-]?[0-9]+([.][0-9]*)?[f][0-9]+"
-# FLOAT64_LIT = r"[+-]?[0-9]+((([.][0-9]*)?[e][0-9]+)|([.][0-9]*))"
-# macro log_str(s)
-#     if ismatch(FLOAT64_LIT, s)
-#         :(Log(parse(Float64, $s)))
-#     elseif ismatch(FLOAT32_LIT, s)
-#         :(Log(parse(Float32, $s)))
-#     else
-#         error("Illegal floating point literal $s")
-#     end
-# end
 
 Base.:(==)(x::LogNumber, y::LogNumber) = x.log == y.log
 Base.isequal(x::LogNumber, y::LogNumber) = isequal(x.log, y.log)
@@ -110,5 +101,9 @@ function logsumexp_stream2(X)
     @show s, α
     LogNumber(s) + α
 end
+
+
+include("literal_macro.jl")
+export @log_str
 
 end
