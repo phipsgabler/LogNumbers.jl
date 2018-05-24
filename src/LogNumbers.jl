@@ -4,7 +4,8 @@ import Base
 
 module LogNumbers
 
-export LogNumber, Log, @log_str, floattype,
+export LogNumber, Log, @log_str,
+    floattype, logvalue,
     LogZero, LogZero32, LogZero64,
     LogNaN, LogNaN32, LogNaN64,
     LogInf, LogInf32, LogInf64,
