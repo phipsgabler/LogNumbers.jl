@@ -24,7 +24,15 @@ end
 
 @testset "Constants, literals, equality" begin
     @test LogZero == LogNumber{Float64}(-Inf) == Log(0) == zero(LogNumber{Float64})
+    @test iszero(LogZero)
     @test Log(1) == LogNumber{Float64}(0.0) == one(LogNumber{Float64})
+
+    @test Log(Inf) == LogInf
+    @test isinf(LogInf)
+
+    @test isequal(Log(NaN), LogNaN)
+    @test Log(NaN) != LogNaN
+    @test isnan(LogNaN)
 
     @test log"32" == Log(32)
     @test log"32e1" == Log(32e1)
@@ -50,4 +58,25 @@ end
     @test 32 - Log(30) ≈ Log(2)
     @test Log(32) - 32 ≈ LogZero
     @test 32 - Log(32) ≈ LogZero
+
+    # indeterminates
+    @test isequal(Log(Inf) - Log(Inf), Log(NaN))
+end
+
+@testset "Multiplication, division" begin
+    @test Log(32) * Log(2) ≈ Log(64)
+    @test Log(32) * Log(1) ≈ Log(32)
+    @test Log(32) * Log(0) ≈ Log(0)
+
+    @test Log(32) / Log(32) ≈ Log(1)
+    @test Log(32) / Log(1) ≈ Log(32)
+    @test Log(1) / Log(32) ≈ Log(1/32)
+    @test Log(0) / Log(32) ≈ Log(0)
+    @test Log(32) / Log(0) ≈ Log(Inf)
+
+    # indetermiates
+    @test isequal(Log(0) / Log(0), Log(NaN))
+    @test isequal(Log(Inf) / Log(Inf), Log(NaN))
+    @test isequal(Log(Inf) * Log(0), Log(NaN))
+    @test isequal(Log(0) * Log(Inf), Log(NaN))
 end

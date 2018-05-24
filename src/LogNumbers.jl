@@ -3,7 +3,9 @@ import Base
 module LogNumbers
 
 export LogNumber, Log, floattype,
-    LogZero, LogZero32, LogZero64
+    LogZero, LogZero32, LogZero64,
+    LogNaN, LogNaN32, LogNaN64,
+    LogInf, LogInf32, LogInf64
 
 
 mutable struct LogNumber{F<:AbstractFloat} <: AbstractFloat
@@ -19,23 +21,13 @@ Base.show(io::IO, x::LogNumber{<:Union{Float32,Float64}}) = print(io, "log", '\"
 Base.show(io::IO, x::LogNumber{F}) where {F} = print(io, "Log(", F, ", ", exp(x.log), ")")
 
 
+# Constructors
 Log(x::F) where {F<:AbstractFloat} = LogNumber{F}(log(x))
 Log(x) = Log(float(x))
 Log(::Type{F}, x) where F = Log(convert(F, x))
 
 floattype(::Type{LogNumber{F}}) where F = F
 floattype(::LogNumber{F}) where F = F
-
-const LogZero64 = LogNumber{Float64}(-Inf64)
-const LogZero32 = LogNumber{Float32}(-Inf32)
-const LogZero = LogZero64
-
-Base.zero(::Type{LogNumber{Float64}}) = LogZero64
-Base.zero(::LogNumber{Float64}) = LogZero64
-Base.zero(::Type{LogNumber{Float32}}) = LogZero32
-Base.zero(::LogNumber{Float32}) = LogZero32
-Base.one(::Type{LogNumber{Float64}}) = LogNumber{Float64}(0e0)
-Base.one(::Type{LogNumber{Float32}}) = LogNumber{Float32}(0f0)
 
 Base.reinterpret(::Type{LogNumber{F}}, x::F) where {F} = LogNumber{F}(x)
 
@@ -47,6 +39,31 @@ Base.promote_rule(::Type{LogNumber{T}}, ::Type{LogNumber{S}}) where {T, S} = Log
 Base.promote_rule(::Type{LogNumber{T}}, ::Type{S}) where {T, S<:Real} = LogNumber{promote_type(T, S)}
 
 
+# Constants
+const LogZero64 = LogNumber{Float64}(-Inf64)
+const LogZero32 = LogNumber{Float32}(-Inf32)
+const LogZero = LogZero64
+
+const LogNaN64 = LogNumber{Float64}(NaN64)
+const LogNaN32 = LogNumber{Float32}(NaN32)
+const LogNaN = LogNaN64
+
+const LogInf64 = LogNumber{Float64}(Inf64)
+const LogInf32 = LogNumber{Float32}(Inf32)
+const LogInf = LogInf64
+
+Base.isinf(x::LogNumber) = isinf(x.log)
+Base.isnan(x::LogNumber) = isnan(x.log)
+
+Base.zero(::Type{LogNumber{Float64}}) = LogZero64
+Base.zero(::LogNumber{Float64}) = LogZero64
+Base.zero(::Type{LogNumber{Float32}}) = LogZero32
+Base.zero(::LogNumber{Float32}) = LogZero32
+Base.one(::Type{LogNumber{Float64}}) = LogNumber{Float64}(0e0)
+Base.one(::Type{LogNumber{Float32}}) = LogNumber{Float32}(0f0)
+
+
+# Comparison
 Base.:(==)(x::LogNumber, y::LogNumber) = x.log == y.log
 Base.isequal(x::LogNumber, y::LogNumber) = isequal(x.log, y.log)
 
@@ -57,6 +74,7 @@ Base.:<=(x::LogNumber, y::LogNumber) = x.log <= y.log
 Base.less(x::LogNumber, y::LogNumber) = less(x.log, y.log)
 
 
+# Arithmetic
 # https://en.wikipedia.org/wiki/Log_probability
 function Base.:+{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F})
     y, x = minmax(x, y)
