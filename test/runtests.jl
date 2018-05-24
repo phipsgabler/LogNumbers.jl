@@ -42,24 +42,32 @@ end
 @testset "Addition, subtraction" begin
     # pure
     @test Log(32) + Log(32) ≈ Log(64)
-    @test LogZero + Log(32) ≈ Log(32)
-    @test Log(32) + LogZero ≈ Log(32)
-    @test LogZero + LogZero ≈ LogZero
+    @test Log(0) + Log(32) ≈ Log(32)
+    @test Log(32) + Log(0) == Log(32)
+    @test Log(0) + Log(0) == Log(0)
     
     @test Log(32) - Log(30) ≈ Log(2)
-    @test Log(32) - LogZero ≈ Log(32)
-    @test Log(32) - Log(32) ≈ LogZero
+    @test Log(32) - Log(0) == Log(32)
+    @test Log(32) - Log(32) == Log(0)
+
+    @test Log(32) + Log(Inf) == Log(Inf)
+    @test Log(Inf) + Log(32) == Log(Inf)
+    @test Log(Inf) - Log(32) == Log(Inf)
+    @test Log(Inf) + Log(Inf) == Log(Inf)
 
     # mixed
     @test Log(32) + 32 ≈ Log(64)
-    @test 0 + LogZero ≈ LogZero
-    @test 32 - LogZero ≈ Log(32)
-    @test Log(32) - 0 ≈ Log(32)
+    @test 0 + Log(0) == Log(0)
+    @test 32 - Log(0) == Log(32)
+    @test Log(32) - 0 == Log(32)
     @test 32 - Log(30) ≈ Log(2)
-    @test Log(32) - 32 ≈ LogZero
-    @test 32 - Log(32) ≈ LogZero
+    @test Log(32) - 32 ≈ Log(0)
+    @test 32 - Log(32) ≈ Log(0)
 
     # indeterminates
+    @test_throws DomainError Log(10) - Log(32)
+    @test_throws DomainError Log(0) - Log(32)
+    @test_throws DomainError Log(32) - Log(Inf)
     @test isequal(Log(Inf) - Log(Inf), Log(NaN))
 end
 
@@ -71,8 +79,8 @@ end
     @test Log(32) / Log(32) ≈ Log(1)
     @test Log(32) / Log(1) ≈ Log(32)
     @test Log(1) / Log(32) ≈ Log(1/32)
-    @test Log(0) / Log(32) ≈ Log(0)
-    @test Log(32) / Log(0) ≈ Log(Inf)
+    @test Log(0) / Log(32) == Log(0)
+    @test Log(32) / Log(0) == Log(Inf)
 
     # indetermiates
     @test isequal(Log(0) / Log(0), Log(NaN))

@@ -52,7 +52,7 @@ const LogInf64 = LogNumber{Float64}(Inf64)
 const LogInf32 = LogNumber{Float32}(Inf32)
 const LogInf = LogInf64
 
-Base.isinf(x::LogNumber) = isinf(x.log)
+Base.isinf(x::LogNumber) = isinf(x.log) && x.log > 0
 Base.isnan(x::LogNumber) = isnan(x.log)
 
 Base.zero(::Type{LogNumber{Float64}}) = LogZero64
@@ -79,12 +79,13 @@ Base.less(x::LogNumber, y::LogNumber) = less(x.log, y.log)
 function Base.:+{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F})
     y, x = minmax(x, y)
     iszero(x) && return x
+    isinf(y) && return y
     LogNumber{F}(x.log + log1p(exp(y.log - x.log)))
 end
 
 function Base.:-{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F})
-    y, x = minmax(x, y)
-    iszero(x) && return x
+    m = max(x, y)               # preserver order to automatically throw DomainError
+    iszero(m) && return m
     LogNumber{F}(x.log + log1p(-exp(y.log - x.log)))
 end
 
