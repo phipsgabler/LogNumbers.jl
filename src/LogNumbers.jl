@@ -5,7 +5,8 @@ module LogNumbers
 export LogNumber, Log, floattype,
     LogZero, LogZero32, LogZero64,
     LogNaN, LogNaN32, LogNaN64,
-    LogInf, LogInf32, LogInf64
+    LogInf, LogInf32, LogInf64,
+    logsumexp
 
 
 mutable struct LogNumber{F<:AbstractFloat} <: AbstractFloat
@@ -68,6 +69,7 @@ Base.:(==)(x::LogNumber, y::LogNumber) = x.log == y.log
 Base.isequal(x::LogNumber, y::LogNumber) = isequal(x.log, y.log)
 
 Base.isapprox(x::LogNumber, y::LogNumber; args...) = isapprox(x.log, y.log; args...)
+Base.eps(::Type{LogNumber{F}}) where F = Base.eps(F)
 
 Base.:<(x::LogNumber, y::LogNumber) = x.log < y.log
 Base.:<=(x::LogNumber, y::LogNumber) = x.log <= y.log
@@ -94,33 +96,47 @@ Base.:/{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F}) = LogNumber{F}(x.log
 
 
 
+infty(::Type{T}) where {T} = one(T) / zero(T)
+infty(::T) where {T} = infty(typeof(T))
 
 # http://www.nowozin.net/sebastian/blog/streaming-log-sum-exp-computation.html
 # https://www.xarg.org/2016/06/the-log-sum-exp-trick-in-machine-learning/
-function logsumexp_stream(X)
-    α = -Inf
-    r = 0.0
+logsumexp(xs) = logsumexp(xs, eltype(xs))
+logsumexp(xs, ::Type{T}) where {T<:LogNumber} = logsumexp_ln(xs, floattype(T))
+function logsumexp_ln(xs, ::Type{F}) where F
+    α = -infty(F)
+    r = zero(F)
     
-    for x in X
-        if x.log <= α
-            r += exp(x.log - α)
+    for x in xs
+        x′ = x.log
+        if x′ <= α
+            r += exp(x′ - α)
         else
-            r *= exp(α - x.log)
-            r += 1.0
-            α = x.log
+            r *= exp(α - x′)
+            r += one(F)
+            α = x′
         end
     end
-    @show r, α
-    LogNumber(r) + α
+
+    LogNumber(log(r) + α)
 end
 
-function logsumexp_stream2(X)
-    α = maximum(X).log
-    s = sum(exp(x.log - α) for x in X)
-    @show s, α
-    LogNumber(s) + α
-end
+function logsumexp(xs, ::Type{F}) where {F}
+    α = -infty(F)
+    r = zero(F)
+    
+    for x′ in xs
+        if x′ <= α
+            r += exp(x′ - α)
+        else
+            r *= exp(α - x′)
+            r += one(F)
+            α = x′
+        end
+    end
 
+    log(r) + α
+end
 
 include("literal_macro.jl")
 export @log_str

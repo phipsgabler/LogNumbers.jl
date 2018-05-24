@@ -88,3 +88,17 @@ end
     @test isequal(Log(Inf) * Log(0), Log(NaN))
     @test isequal(Log(0) * Log(Inf), Log(NaN))
 end
+
+@testset "Logsumexp" begin
+    function logsumexp_naive(xs)
+        α = maximum(xs)
+        r = sum(exp(x - α) for x in xs)
+        log(r) + α
+    end
+
+    @test isequal((logsumexp(Log.([0]))).log, logsumexp_naive(log.([0])))
+    @test (logsumexp(Log.([1]))).log ≈ logsumexp_naive(log.([1]))
+    @test (logsumexp(Log.([1, 2, 3]))).log ≈ logsumexp_naive(log.([1, 2, 3]))
+    @test (logsumexp(Log.(1:1000))).log ≈ logsumexp_naive(log.(1:1000))
+    @test (logsumexp(Log.(1 ./ (1:1000)))).log ≈ logsumexp_naive(log.(1 ./ (1:1000)))
+end
