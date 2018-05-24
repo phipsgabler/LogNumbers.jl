@@ -1,3 +1,5 @@
+__precompile__()
+
 import Base
 
 module LogNumbers
