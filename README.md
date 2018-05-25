@@ -97,3 +97,16 @@ Finally, there is a function `logsumexp` which effiently and more numerically st
 value of `log(sum(exp.(xs)))` for xs in log space -- a frequent operation, which corresponds to
 summing probabilities in normal space.  The implementation works on general iterables both of normal
 numbers and `LogNumbers`.
+
+## Todo
+
+- Introduce `AbstractLogNumber` and `primitive` type for `LogFloat32 <: AbstractLogNumber{Float32}`,
+  etc.  `WrappedLogNumber` for the general case.
+- Better support for 16 bit floats.
+- Sane conversion: not `float` anymore?  Why the infinite loop in `sin` etc.?
+- More mathematical functions.
+- Broadcasting to operate directly on log space values.
+- What is the right epsilon?  Also `typemin`, `typemax`, etc.
+- Overload `parse` appropriately.
+- Add docstrings to everything!
+- Tests for non 64-bit types
