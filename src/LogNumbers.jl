@@ -40,39 +40,39 @@ Base.promote_rule(::Type{LogNumber{T}}, ::Type{S}) where {T, S<:Real} = LogNumbe
 
 
 # Comparison, floating point stuff
-Base.:(==)(x::LogNumber, y::LogNumber) = logvalue(x) == logvalue(y)
-Base.isequal(x::LogNumber, y::LogNumber) = isequal(logvalue(x), logvalue(y))
-Base.hash(x::LogNumber, h) = hash(logvalue(x), hash(typeof(x), h))
+Base.:(==)(x::AbstractLogNumber, y::AbstractLogNumber) = logvalue(x) == logvalue(y)
+Base.isequal(x::AbstractLogNumber, y::AbstractLogNumber) = isequal(logvalue(x), logvalue(y))
+Base.hash(x::AbstractLogNumber, h) = hash(logvalue(x), hash(typeof(x), h))
 
-Base.isapprox(x::LogNumber, y::LogNumber; args...) = isapprox(logvalue(x), logvalue(y); args...)
-Base.eps(::Type{LogNumber{F}}) where F = Base.eps(F) # is this the right thing? 
+Base.isapprox(x::AbstractLogNumber, y::AbstractLogNumber; args...) = isapprox(logvalue(x), logvalue(y); args...)
+Base.eps(::Type{<:AbstractLogNumber{F}}) where F = Base.eps(F) # is this the right thing? 
 
-Base.:<(x::LogNumber, y::LogNumber) = logvalue(x) < logvalue(y)
-Base.:<=(x::LogNumber, y::LogNumber) = logvalue(x) <= logvalue(y)
-Base.less(x::LogNumber, y::LogNumber) = less(logvalue(x), logvalue(y))
+Base.:<(x::AbstractLogNumber, y::AbstractLogNumber) = logvalue(x) < logvalue(y)
+Base.:<=(x::AbstractLogNumber, y::AbstractLogNumber) = logvalue(x) <= logvalue(y)
+Base.less(x::AbstractLogNumber, y::AbstractLogNumber) = less(logvalue(x), logvalue(y))
 
-Base.isinf(x::LogNumber) = isinf(logvalue(x)) && logvalue(x) > 0
-Base.isnan(x::LogNumber) = isnan(logvalue(x))
+Base.isinf(x::AbstractLogNumber) = isinf(logvalue(x)) && logvalue(x) > 0
+Base.isnan(x::AbstractLogNumber) = isnan(logvalue(x))
 
 # Arithmetic etc.
 # See https://en.wikipedia.org/wiki/Log_probability for the formulae and precautions
 
-function Base.:+(x::LogNumber{F}, y::LogNumber{F}) where {F}
+function Base.:+(x::AbstractLogNumber{F}, y::AbstractLogNumber{F}) where {F}
     y, x = minmax(x, y)
     iszero(x) && return x
     isinf(y) && return y
     LogNumber{F}(logvalue(x) + log1p(exp(logvalue(y) - logvalue(x))))
 end
 
-function Base.:-(x::LogNumber{F}, y::LogNumber{F}) where {F}
+function Base.:-(x::AbstractLogNumber{F}, y::AbstractLogNumber{F}) where {F}
     m = max(x, y)               # preserver order to automatically throw DomainError
     iszero(m) && return m
     LogNumber{F}(logvalue(x) + log1p(-exp(logvalue(y) - logvalue(x))))
 end
 
-Base.:*(x::LogNumber{F}, y::LogNumber{F}) where {F} = LogNumber{F}(logvalue(x) + logvalue(y))
-Base.:/(x::LogNumber{F}, y::LogNumber{F}) where {F} = LogNumber{F}(logvalue(x) - logvalue(y))
-Base.log(x::LogNumber{F}) where {F} = LogNumber{F}(log(logvalue(x)))
+Base.:*(x::AbstractLogNumber{F}, y::AbstractLogNumber{F}) where {F} = LogNumber{F}(logvalue(x) + logvalue(y))
+Base.:/(x::AbstractLogNumber{F}, y::AbstractLogNumber{F}) where {F} = LogNumber{F}(logvalue(x) - logvalue(y))
+Base.log(x::AbstractLogNumber{F}) where {F} = LogNumber{F}(log(logvalue(x)))
 
 
 # Summing values in log space
@@ -85,7 +85,7 @@ infty(::T) where {T} = infty(T)
 
 logsumexp(xs) = logsumexp(xs, eltype(xs))
 
-function logsumexp(xs, ::Type{LogNumber{F}}) where {F}
+function logsumexp(xs, ::Type{<:AbstractLogNumber{F}}) where {F}
     α, r = mapfoldr(logvalue, expsum_update, (-infty(F), zero(F)), xs)
     LogNumber(log(r) + α)
 end

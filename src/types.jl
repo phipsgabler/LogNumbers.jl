@@ -4,7 +4,9 @@ export logvalue,
     LogZero16, LogInf16, LogNaN16,
     LogZero, LogNaN, LogInf
 
-mutable struct LogNumber{F<:AbstractFloat} <: AbstractFloat
+abstract type AbstractLogNumber{F<:AbstractFloat} <: AbstractFloat end
+
+mutable struct LogNumber{F} <: AbstractLogNumber{F}
     log::F
 
     LogNumber{T}(x::T) where {T<:AbstractFloat} = new{T}(x)
