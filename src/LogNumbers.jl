@@ -12,31 +12,10 @@ include("types.jl")
 
 
 # IO, literals
-Base.show(io::IO, x::LogNumber{<:Union{Float32,Float64}}) = print(io, "log", '\"', exp(x.log), '\"')
-Base.show(io::IO, x::LogNumber{F}) where {F} = print(io, "Log(", F, ", ", exp(x.log), ")")
+Base.show(io::IO, x::Union{LogFloat32,LogFloat64}) = print(io, "log", '\"', exp(x.log), '\"')
+Base.show(io::IO, x::AbstractLogNumber{F}) where {F} = print(io, "Log(", F, ", ", exp(x.log), ")")
 
 include("literal_macro.jl")
-
-
-# Constructors and conversions
-Log(x::F) where {F<:AbstractFloat} = LogNumber{F}(log(x))
-Log(x) = Log(float(x))
-Log(::Type{F}, x) where F = Log(convert(F, x))
-
-floattype(::Type{LogNumber{F}}) where F = F
-floattype(::LogNumber{F}) where F = F
-
-# Base.float(::Type{LogNumber{F}}) where {F} = LogNumber{F}
-# Base.float(x::LogNumber) = x
-
-Base.reinterpret(::Type{LogNumber{F}}, x::F) where {F} = LogNumber{F}(x)
-
-Base.convert(::Type{LogNumber{F}}, x::LogNumber) where {F} = LogNumber{F}(convert(F, logvalue(x)))
-Base.convert(::Type{LogNumber{F}}, x::Real) where {F} = LogNumber{F}(log(convert(F, x)))
-Base.convert(::Type{T}, x::LogNumber) where {T} = convert(T, exp(logvalue(x)))
-
-Base.promote_rule(::Type{LogNumber{T}}, ::Type{LogNumber{S}}) where {T, S} = LogNumber{promote_type(T, S)}
-Base.promote_rule(::Type{LogNumber{T}}, ::Type{S}) where {T, S<:Real} = LogNumber{promote_type(T, S)}
 
 
 # Comparison, floating point stuff
@@ -57,22 +36,22 @@ Base.isnan(x::AbstractLogNumber) = isnan(logvalue(x))
 # Arithmetic etc.
 # See https://en.wikipedia.org/wiki/Log_probability for the formulae and precautions
 
-function Base.:+(x::AbstractLogNumber{F}, y::AbstractLogNumber{F}) where {F}
+function Base.:+(x::AbstractLogNumber, y::AbstractLogNumber)
     y, x = minmax(x, y)
     iszero(x) && return x
     isinf(y) && return y
-    LogNumber{F}(logvalue(x) + log1p(exp(logvalue(y) - logvalue(x))))
+    LogNumber(logvalue(x) + log1p(exp(logvalue(y) - logvalue(x))))
 end
 
-function Base.:-(x::AbstractLogNumber{F}, y::AbstractLogNumber{F}) where {F}
+function Base.:-(x::AbstractLogNumber, y::AbstractLogNumber)
     m = max(x, y)               # preserver order to automatically throw DomainError
     iszero(m) && return m
-    LogNumber{F}(logvalue(x) + log1p(-exp(logvalue(y) - logvalue(x))))
+    LogNumber(logvalue(x) + log1p(-exp(logvalue(y) - logvalue(x))))
 end
 
-Base.:*(x::AbstractLogNumber{F}, y::AbstractLogNumber{F}) where {F} = LogNumber{F}(logvalue(x) + logvalue(y))
-Base.:/(x::AbstractLogNumber{F}, y::AbstractLogNumber{F}) where {F} = LogNumber{F}(logvalue(x) - logvalue(y))
-Base.log(x::AbstractLogNumber{F}) where {F} = LogNumber{F}(log(logvalue(x)))
+Base.:*(x::AbstractLogNumber, y::AbstractLogNumber) = LogNumber(logvalue(x) + logvalue(y))
+Base.:/(x::AbstractLogNumber, y::AbstractLogNumber) = LogNumber(logvalue(x) - logvalue(y))
+Base.log(x::AbstractLogNumber) = LogNumber(log(logvalue(x)))
 
 
 # Summing values in log space

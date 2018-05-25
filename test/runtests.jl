@@ -4,8 +4,8 @@ using Base.Test
 @testset "Conversions" begin
     x = 42.0
     
-    r1 = convert(LogNumber{Float64}, Log(x))
-    r2 = convert(LogNumber{Float32}, Log(x))
+    r1 = convert(LogFloat64, Log(x))
+    r2 = convert(LogFloat32, Log(x))
     r3 = convert(Float64, Log(x))
     r4 = convert(Float32, Log(x))
     @test r1.log ≈ log(x)
@@ -23,9 +23,9 @@ using Base.Test
 end
 
 @testset "Constants, literals, equality" begin
-    @test LogZero == LogNumber{Float64}(-Inf) == Log(0) == zero(LogNumber{Float64})
+    @test LogZero == LogNumber(Float64, -Inf) == Log(0) == zero(LogFloat64)
     @test iszero(LogZero)
-    @test Log(1) == LogNumber{Float64}(0.0) == one(LogNumber{Float64})
+    @test Log(1) == LogNumber(Float64, 0.0) == one(LogFloat64)
 
     @test Log(Inf) == LogInf
     @test isinf(LogInf)

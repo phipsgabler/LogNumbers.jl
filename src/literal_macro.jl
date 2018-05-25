@@ -6,7 +6,7 @@ export @log_str
 
 macro log_str(s)
     F, x = string_to_number(s, 0)
-    return :(LogNumber{$F}($(log(x))))
+    return :(LogNumber($F, $(log(x))))
 end
 
 # from https://github.com/JuliaLang/JuliaParser.jl/blob/f15bb47ff00536c72bb1cdb414baad22dede44c7/src/lexer.jl
