@@ -4,30 +4,21 @@ import Base
 
 module LogNumbers
 
-export LogNumber, Log, @log_str,
-    floattype, logvalue,
-    LogZero, LogZero32, LogZero64,
-    LogNaN, LogNaN32, LogNaN64,
-    LogInf, LogInf32, LogInf64,
-    logsumexp
+export LogNumber, Log, 
+    floattype, logsumexp
 
 
-mutable struct LogNumber{F<:AbstractFloat} <: AbstractFloat
-    log::F
+include("types.jl")
 
-    LogNumber{T}(x::T) where {T<:AbstractFloat} = new{T}(x)
-end
 
-LogNumber(x::F) where {F<:AbstractFloat} = LogNumber{F}(x)
-LogNumber(x) = LogNumber(float(x))
-
+# IO, literals
 Base.show(io::IO, x::LogNumber{<:Union{Float32,Float64}}) = print(io, "log", '\"', exp(x.log), '\"')
 Base.show(io::IO, x::LogNumber{F}) where {F} = print(io, "Log(", F, ", ", exp(x.log), ")")
 
-
-# Constructors and conversions
 include("literal_macro.jl")
 
+
+# Constructors and conversions
 Log(x::F) where {F<:AbstractFloat} = LogNumber{F}(log(x))
 Log(x) = Log(float(x))
 Log(::Type{F}, x) where F = Log(convert(F, x))
@@ -38,55 +29,30 @@ floattype(::LogNumber{F}) where F = F
 # Base.float(::Type{LogNumber{F}}) where {F} = LogNumber{F}
 # Base.float(x::LogNumber) = x
 
-logvalue(x::LogNumber) = x.log
-
 Base.reinterpret(::Type{LogNumber{F}}, x::F) where {F} = LogNumber{F}(x)
 
-Base.convert(::Type{LogNumber{F}}, x::LogNumber) where {F} = LogNumber{F}(convert(F, x.log))
+Base.convert(::Type{LogNumber{F}}, x::LogNumber) where {F} = LogNumber{F}(convert(F, logvalue(x)))
 Base.convert(::Type{LogNumber{F}}, x::Real) where {F} = LogNumber{F}(log(convert(F, x)))
-Base.convert(::Type{T}, x::LogNumber) where {T} = convert(T, exp(x.log))
+Base.convert(::Type{T}, x::LogNumber) where {T} = convert(T, exp(logvalue(x)))
 
 Base.promote_rule(::Type{LogNumber{T}}, ::Type{LogNumber{S}}) where {T, S} = LogNumber{promote_type(T, S)}
 Base.promote_rule(::Type{LogNumber{T}}, ::Type{S}) where {T, S<:Real} = LogNumber{promote_type(T, S)}
 
 
-# Constants
-const LogZero64 = LogNumber{Float64}(-Inf64)
-const LogInf64 = LogNumber{Float64}(Inf64)
-const LogNaN64 = LogNumber{Float64}(NaN64)
+# Comparison, floating point stuff
+Base.:(==)(x::LogNumber, y::LogNumber) = logvalue(x) == logvalue(y)
+Base.isequal(x::LogNumber, y::LogNumber) = isequal(logvalue(x), logvalue(y))
+Base.hash(x::LogNumber, h) = hash(logvalue(x), hash(typeof(x), h))
 
-const LogZero32 = LogNumber{Float32}(-Inf32)
-const LogNaN32 = LogNumber{Float32}(NaN32)
-const LogInf32 = LogNumber{Float32}(Inf32)
-
-const LogZero = LogZero64
-const LogNaN = LogNaN64
-const LogInf = LogInf64
-
-Base.zero(::Type{LogNumber{Float64}}) = LogZero64
-Base.zero(::LogNumber{Float64}) = LogZero64
-Base.zero(::Type{LogNumber{Float32}}) = LogZero32
-Base.zero(::LogNumber{Float32}) = LogZero32
-
-Base.one(::Type{LogNumber{Float64}}) = LogNumber{Float64}(0e0)
-Base.one(::Type{LogNumber{Float32}}) = LogNumber{Float32}(0f0)
-
-Base.isinf(x::LogNumber) = isinf(x.log) && x.log > 0
-Base.isnan(x::LogNumber) = isnan(x.log)
-
-
-# Comparison
-Base.:(==)(x::LogNumber, y::LogNumber) = x.log == y.log
-Base.isequal(x::LogNumber, y::LogNumber) = isequal(x.log, y.log)
-Base.hash(x::LogNumber, h) = hash(x.log, hash(typeof(x), h))
-
-Base.isapprox(x::LogNumber, y::LogNumber; args...) = isapprox(x.log, y.log; args...)
+Base.isapprox(x::LogNumber, y::LogNumber; args...) = isapprox(logvalue(x), logvalue(y); args...)
 Base.eps(::Type{LogNumber{F}}) where F = Base.eps(F) # is this the right thing? 
 
-Base.:<(x::LogNumber, y::LogNumber) = x.log < y.log
-Base.:<=(x::LogNumber, y::LogNumber) = x.log <= y.log
-Base.less(x::LogNumber, y::LogNumber) = less(x.log, y.log)
+Base.:<(x::LogNumber, y::LogNumber) = logvalue(x) < logvalue(y)
+Base.:<=(x::LogNumber, y::LogNumber) = logvalue(x) <= logvalue(y)
+Base.less(x::LogNumber, y::LogNumber) = less(logvalue(x), logvalue(y))
 
+Base.isinf(x::LogNumber) = isinf(logvalue(x)) && logvalue(x) > 0
+Base.isnan(x::LogNumber) = isnan(logvalue(x))
 
 # Arithmetic etc.
 # See https://en.wikipedia.org/wiki/Log_probability for the formulae and precautions
@@ -95,18 +61,18 @@ function Base.:+(x::LogNumber{F}, y::LogNumber{F}) where {F}
     y, x = minmax(x, y)
     iszero(x) && return x
     isinf(y) && return y
-    LogNumber{F}(x.log + log1p(exp(y.log - x.log)))
+    LogNumber{F}(logvalue(x) + log1p(exp(logvalue(y) - logvalue(x))))
 end
 
 function Base.:-(x::LogNumber{F}, y::LogNumber{F}) where {F}
     m = max(x, y)               # preserver order to automatically throw DomainError
     iszero(m) && return m
-    LogNumber{F}(x.log + log1p(-exp(y.log - x.log)))
+    LogNumber{F}(logvalue(x) + log1p(-exp(logvalue(y) - logvalue(x))))
 end
 
-Base.:*(x::LogNumber{F}, y::LogNumber{F}) where {F} = LogNumber{F}(x.log + y.log)
-Base.:/(x::LogNumber{F}, y::LogNumber{F}) where {F} = LogNumber{F}(x.log - y.log)
-Base.log(x::LogNumber{F}) where {F} = LogNumber{F}(log(x.log))
+Base.:*(x::LogNumber{F}, y::LogNumber{F}) where {F} = LogNumber{F}(logvalue(x) + logvalue(y))
+Base.:/(x::LogNumber{F}, y::LogNumber{F}) where {F} = LogNumber{F}(logvalue(x) - logvalue(y))
+Base.log(x::LogNumber{F}) where {F} = LogNumber{F}(log(logvalue(x)))
 
 
 # Summing values in log space

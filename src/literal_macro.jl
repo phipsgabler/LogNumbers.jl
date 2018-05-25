@@ -2,6 +2,8 @@
 # FLOAT32_LIT = r"[+-]?[0-9]+([.][0-9]*)?[f][0-9]+"
 # FLOAT64_LIT = r"[+-]?[0-9]+((([.][0-9]*)?[e][0-9]+)|([.][0-9]*))"
 
+export @log_str
+
 macro log_str(s)
     F, x = string_to_number(s, 0)
     return :(LogNumber{$F}($(log(x))))
