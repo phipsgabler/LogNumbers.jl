@@ -35,6 +35,9 @@ Log(::Type{F}, x) where F = Log(convert(F, x))
 floattype(::Type{LogNumber{F}}) where F = F
 floattype(::LogNumber{F}) where F = F
 
+# Base.float(::Type{LogNumber{F}}) where {F} = LogNumber{F}
+# Base.float(x::LogNumber) = x
+
 logvalue(x::LogNumber) = x.log
 
 Base.reinterpret(::Type{LogNumber{F}}, x::F) where {F} = LogNumber{F}(x)
@@ -85,24 +88,25 @@ Base.:<=(x::LogNumber, y::LogNumber) = x.log <= y.log
 Base.less(x::LogNumber, y::LogNumber) = less(x.log, y.log)
 
 
-# Arithmetic
+# Arithmetic etc.
 # See https://en.wikipedia.org/wiki/Log_probability for the formulae and precautions
 
-function Base.:+{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F})
+function Base.:+(x::LogNumber{F}, y::LogNumber{F}) where {F}
     y, x = minmax(x, y)
     iszero(x) && return x
     isinf(y) && return y
     LogNumber{F}(x.log + log1p(exp(y.log - x.log)))
 end
 
-function Base.:-{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F})
+function Base.:-(x::LogNumber{F}, y::LogNumber{F}) where {F}
     m = max(x, y)               # preserver order to automatically throw DomainError
     iszero(m) && return m
     LogNumber{F}(x.log + log1p(-exp(y.log - x.log)))
 end
 
-Base.:*{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F}) = LogNumber{F}(x.log + y.log)
-Base.:/{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F}) = LogNumber{F}(x.log - y.log)
+Base.:*(x::LogNumber{F}, y::LogNumber{F}) where {F} = LogNumber{F}(x.log + y.log)
+Base.:/(x::LogNumber{F}, y::LogNumber{F}) where {F} = LogNumber{F}(x.log - y.log)
+Base.log(x::LogNumber{F}) where {F} = LogNumber{F}(log(x.log))
 
 
 # Summing values in log space
@@ -112,7 +116,6 @@ Base.:/{F<:AbstractFloat}(x::LogNumber{F}, y::LogNumber{F}) = LogNumber{F}(x.log
 
 infty(::Type{T}) where {T} = one(T) / zero(T)
 infty(::T) where {T} = infty(T)
-
 
 logsumexp(xs) = logsumexp(xs, eltype(xs))
 
