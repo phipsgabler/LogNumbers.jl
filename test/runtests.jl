@@ -33,20 +33,37 @@ end
     @test log"32f1" isa logtype(32f1)
 end
 
-@testset "Constants, equality" begin
+@testset "Constants" begin
+    LogZero16 = zero(LogFloat16)
+
+    # zero and inf constants
+    for (logzero, loginf, F) ∈ zip([LogZero64, LogZero32, LogZero16],
+                                [LogInf64, LogInf32, LogInf16],
+                                [Float64, Float32, Float16])
+        L = logtype(F)
+        @test logzero == zero(L)
+        @test loginf == infty(L)
+    end
+
+    # nan constants
+    for (nan, lognan) ∈ zip([NaN64, NaN32, NaN16], [LogNaN64, LogNaN32, LogNaN16])
+        @test isequal(Log(nan), lognan)
+        @test Log(nan) != lognan
+        @test isnan(lognan)
+    end
+
+    # constructors
     for F ∈ [Float64, Float32, Float16]
-        @test LogZero == LogNumber(Float64, -Inf) == Log(0) == zero(LogFloat64)
-        @test iszero(LogZero)
-        @test Log(1) == LogNumber(Float64, 0.0) == one(LogFloat64)
+        L = logtype(F)
 
-        @test Log(Inf) == LogInf
-        @test isinf(LogInf)
-
-        @test isequal(Log(NaN), LogNaN)
-        @test Log(NaN) != LogNaN
-        @test isnan(LogNaN)
+        @test Log(F, 0) == LogNumber(F, -infty(F)) == zero(L)
+        @test iszero(zero(L))
+        @test Log(F, 1) == LogNumber(F, 0) == one(L)
+        @test Log(infty(F)) == infty(L)
+        @test isinf(infty(L))
     end
 end
+
 
 @testset "Addition, subtraction" begin
     for F ∈ [Float64, Float32, Float16]
@@ -111,6 +128,7 @@ end
 
     l1, l2, l3, l4, l5 = [0], [1], [42], 1:1000, 1 ./ (1:1000)
     @test isequal(logvalue(logsumexp(Log.([0]))), logsumexp_naive(log.([0])))
+    
     for l in [l2, l3, l4, l5]
         @test logvalue(logsumexp(Log.(l))) ≈ logsumexp(log.(l)) ≈ logsumexp_naive(log.(l))
     end
