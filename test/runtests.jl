@@ -40,53 +40,57 @@ end
 end
 
 @testset "Addition, subtraction" begin
-    # pure
-    @test Log(32) + Log(32) ≈ Log(64)
-    @test Log(0) + Log(32) ≈ Log(32)
-    @test Log(32) + Log(0) == Log(32)
-    @test Log(0) + Log(0) == Log(0)
-    
-    @test Log(32) - Log(30) ≈ Log(2)
-    @test Log(32) - Log(0) == Log(32)
-    @test Log(32) - Log(32) == Log(0)
+    for F ∈ [Float64, Float32, Float16]
+        # pure
+        @test Log(F, 32) + Log(F, 32) ≈ Log(F, 64)
+        @test Log(F, 0) + Log(F, 32) ≈ Log(F, 32)
+        @test Log(F, 32) + Log(F, 0) == Log(F, 32)
+        @test Log(F, 0) + Log(F, 0) == Log(F, 0)
+        
+        @test Log(F, 32) - Log(F, 30) ≈ Log(F, 2)
+        @test Log(F, 32) - Log(F, 0) == Log(F, 32)
+        @test Log(F, 32) - Log(F, 32) == Log(F, 0)
 
-    @test Log(32) + Log(Inf) == Log(Inf)
-    @test Log(Inf) + Log(32) == Log(Inf)
-    @test Log(Inf) - Log(32) == Log(Inf)
-    @test Log(Inf) + Log(Inf) == Log(Inf)
+        @test Log(F, 32) + Log(F, Inf) == Log(F, Inf)
+        @test Log(F, Inf) + Log(F, 32) == Log(F, Inf)
+        @test Log(F, Inf) - Log(F, 32) == Log(F, Inf)
+        @test Log(F, Inf) + Log(F, Inf) == Log(F, Inf)
 
-    # mixed
-    @test Log(32) + 32 ≈ Log(64)
-    @test 0 + Log(0) == Log(0)
-    @test 32 - Log(0) == Log(32)
-    @test Log(32) - 0 == Log(32)
-    @test 32 - Log(30) ≈ Log(2)
-    @test Log(32) - 32 ≈ Log(0)
-    @test 32 - Log(32) ≈ Log(0)
+        # mixed
+        @test Log(F, 32) + 32 ≈ Log(F, 64)
+        @test 0 + Log(F, 0) == Log(F, 0)
+        @test 32 - Log(F, 0) == Log(F, 32)
+        @test Log(F, 32) - 0 == Log(F, 32)
+        @test 32 - Log(F, 30) ≈ Log(F, 2)
+        @test Log(F, 32) - 32 ≈ Log(F, 0)
+        @test 32 - Log(F, 32) ≈ Log(F, 0)
 
-    # indeterminates
-    @test_throws DomainError Log(10) - Log(32)
-    @test_throws DomainError Log(0) - Log(32)
-    @test_throws DomainError Log(32) - Log(Inf)
-    @test isequal(Log(Inf) - Log(Inf), Log(NaN))
+        # indeterminates
+        @test_throws DomainError Log(F, 10) - Log(F, 32)
+        @test_throws DomainError Log(F, 0) - Log(F, 32)
+        @test_throws DomainError Log(F, 32) - Log(F, Inf)
+        @test isequal(Log(F, Inf) - Log(F, Inf), Log(F, NaN))
+    end
 end
 
 @testset "Multiplication, division" begin
-    @test Log(32) * Log(2) ≈ Log(64)
-    @test Log(32) * Log(1) ≈ Log(32)
-    @test Log(32) * Log(0) ≈ Log(0)
+    for F ∈ [Float64, Float32, Float16]
+        @test Log(F, 32) * Log(F, 2) ≈ Log(F, 64)
+        @test Log(F, 32) * Log(F, 1) ≈ Log(F, 32)
+        @test Log(F, 32) * Log(F, 0) ≈ Log(F, 0)
 
-    @test Log(32) / Log(32) ≈ Log(1)
-    @test Log(32) / Log(1) ≈ Log(32)
-    @test Log(1) / Log(32) ≈ Log(1/32)
-    @test Log(0) / Log(32) == Log(0)
-    @test Log(32) / Log(0) == Log(Inf)
+        @test Log(F, 32) / Log(F, 32) ≈ Log(F, 1)
+        @test Log(F, 32) / Log(F, 1) ≈ Log(F, 32)
+        @test Log(F, 1) / Log(F, 32) ≈ Log(F, 1/32)
+        @test Log(F, 0) / Log(F, 32) == Log(F, 0)
+        @test Log(F, 32) / Log(F, 0) == Log(F, Inf)
 
-    # indetermiates
-    @test isequal(Log(0) / Log(0), Log(NaN))
-    @test isequal(Log(Inf) / Log(Inf), Log(NaN))
-    @test isequal(Log(Inf) * Log(0), Log(NaN))
-    @test isequal(Log(0) * Log(Inf), Log(NaN))
+        # indetermiates
+        @test isequal(Log(F, 0) / Log(F, 0), Log(F, NaN))
+        @test isequal(Log(F, Inf) / Log(F, Inf), Log(F, NaN))
+        @test isequal(Log(F, Inf) * Log(F, 0), Log(F, NaN))
+        @test isequal(Log(F, 0) * Log(F, Inf), Log(F, NaN))
+    end
 end
 
 @testset "Logsumexp" begin
