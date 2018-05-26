@@ -9,7 +9,7 @@ export AbstractLogNumber, PrimitiveLogNumber, WrappedLogNumber,
 
 abstract type AbstractLogNumber{F<:AbstractFloat} <: AbstractFloat end
 
-abstract type PrimitiveLogNumber{F} <: AbstractLogNumber{F} end
+abstract type PrimitiveLogNumber{F<:AbstractFloat} <: AbstractLogNumber{F} end
 
 primitive type LogFloat64 <: PrimitiveLogNumber{Float64} 64 end
 primitive type LogFloat32 <: PrimitiveLogNumber{Float32} 32 end
@@ -17,7 +17,7 @@ primitive type LogFloat16 <: PrimitiveLogNumber{Float16} 16 end
 
 logvalue(x::PrimitiveLogNumber{F}) where F = reinterpret(F, x)
 
-mutable struct WrappedLogNumber{F} <: AbstractLogNumber{F}
+mutable struct WrappedLogNumber{F<:AbstractFloat} <: AbstractLogNumber{F}
     log::F
     WrappedLogNumber{T}(x::T) where {T<:AbstractFloat} = new{T}(x)
 end
@@ -35,6 +35,7 @@ logtype(::Type{Float64}) = LogFloat64
 logtype(::Type{Float32}) = LogFloat32
 logtype(::Type{Float16}) = LogFloat16
 logtype(::Type{F}) where {F<:AbstractFloat} = WrappedLogNumber{F}
+logtype(::Type{N}) where N = logtype(float(N))
 logtype(x) = logtype(typeof(x))
 
 # reinterpret and LogNumber perform conversion without transforming to log space
@@ -42,27 +43,25 @@ Base.reinterpret(::Type{WrappedLogNumber{F}}, x::F) where {F} = WrappedLogNumber
 
 LogNumber(x::F) where {F<:AbstractFloat} = reinterpret(logtype(F), x)
 LogNumber(x) = LogNumber(float(x))
-LogNumber(::Type{F}, x) where F = LogNumber(convert(F, x))
+LogNumber(::Type{F}, x) where {F<:AbstractFloat} = LogNumber(convert(F, x))
 
 # convert and log transform with implicit log transformation
-Base.convert(::Type{L}, x::F) where {F, L<:AbstractLogNumber{F}} = reinterpret(L, log(x))
-Base.convert(::Type{L}, x::Real) where {F, L<:AbstractLogNumber{F}} =
-    convert(L, convert(F, x))
+Base.convert(::Type{L}, x) where {L<:AbstractLogNumber} =
+    reinterpret(L, log(convert(floattype(L), x)))
 
-Log(x::F) where {F<:AbstractFloat} = convert(logtype(F), log(x))
+Log(x::F) where {F<:AbstractFloat} = convert(logtype(F), x)
 Log(x) = Log(float(x))
-Log(::Type{F}, x) where F = Log(convert(F, x))
+Log(::Type{F}, x) where {F<:AbstractFloat} = Log(convert(F, x))
 
 # converting back to normal space with exp
+Base.convert(::Type{L}, x::AbstractLogNumber) where {L<:AbstractLogNumber} =
+    LogNumber(convert(floattype(L), logvalue(x)))
 Base.convert(::Type{T}, x::AbstractLogNumber) where {T} = convert(T, exp(logvalue(x)))
 
-# Base.float(::Type{LogNumber{F}}) where {F} = LogNumber{F}
-# Base.float(x::LogNumber) = x
-
-
-# Base.promote_rule(::Type{LogNumber{T}}, ::Type{AbstractLogNumber{S}}) where {T, S} =
-#     LogNumber{promote_type(T, S)}
-# Base.promote_rule(::Type{LogNumber{T}}, ::Type{S}) where {T, S<:Real} = LogNumber{promote_type(T, S)}
+Base.promote_rule(::Type{S}, ::Type{T}) where {S<:AbstractLogNumber, T<:AbstractLogNumber} =
+    logtype(promote_type(floattype(S), floattype(T)))
+Base.promote_rule(::Type{L}, ::Type{R}) where {L<:AbstractLogNumber, R<:Real} =
+    logtype(promote_type(floattype(L), R))
 
 
 # Constants
@@ -82,14 +81,17 @@ const LogZero = LogZero64
 const LogNaN = LogNaN64
 const LogInf = LogInf64
 
+infty(::Type{T}) where {T} = one(T) / zero(T)
+infty(::T) where {T} = infty(T)
+
 Base.zero(::Type{LogFloat64}) = LogZero64
 Base.zero(::Type{LogFloat32}) = LogZero32
 Base.zero(::Type{LogFloat16}) = LogZero16
-Base.zero(::Type{WrappedLogNumber{F}}) where F = zero(F)
+Base.zero(::Type{WrappedLogNumber{F}}) where F = -infty(F)
 Base.zero(x::AbstractLogNumber) = zero(typeof(x))
 
 Base.one(::Type{LogFloat64}) = LogNumber(0e0)
 Base.one(::Type{LogFloat32}) = LogNumber(0f0)
 Base.one(::Type{LogFloat16}) = LogNumber(Float16(0f0))
-Base.one(::Type{WrappedLogNumber{F}}) where F = one(F)
+Base.one(::Type{WrappedLogNumber{F}}) where F = zero(F)
 Base.one(x::AbstractLogNumber) = one(typeof(x))

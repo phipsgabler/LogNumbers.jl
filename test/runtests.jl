@@ -4,13 +4,13 @@ using Base.Test
 @testset "Conversions" begin
     x = 42.0
     
-    r1 = convert(LogFloat64, Log(x))
-    r2 = convert(LogFloat32, Log(x))
+    r1 = convert(LogFloat64, x)
+    r2 = convert(LogFloat32, x)
     r3 = convert(Float64, Log(x))
     r4 = convert(Float32, Log(x))
-    @test r1.log ≈ log(x)
+    @test logvalue(r1) ≈ log(x)
     @test floattype(r1) == Float64 == typeof(x)
-    @test r2.log ≈ log(x)
+    @test logvalue(r2) ≈ log(x)
     @test floattype(r2) == Float32
     @test r3 ≈ x
     @test typeof(r3) == Float64 == typeof(x)
@@ -97,8 +97,8 @@ end
     end
 
     l1, l2, l3, l4, l5 = [0], [1], [42], 1:1000, 1 ./ (1:1000)
-    @test isequal((logsumexp(Log.([0]))).log, logsumexp_naive(log.([0])))
+    @test isequal(logvalue(logsumexp(Log.([0]))), logsumexp_naive(log.([0])))
     for l in [l2, l3, l4, l5]
-        @test (logsumexp(Log.(l))).log ≈ logsumexp(log.(l)) ≈ logsumexp_naive(log.(l))
+        @test logvalue(logsumexp(Log.(l))) ≈ logsumexp(log.(l)) ≈ logsumexp_naive(log.(l))
     end
 end

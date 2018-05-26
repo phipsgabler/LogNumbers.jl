@@ -7,13 +7,12 @@ module LogNumbers
 export LogNumber, Log, 
     floattype, logsumexp
 
-
 include("types.jl")
 
 
 # IO, literals
-Base.show(io::IO, x::Union{LogFloat32,LogFloat64}) = print(io, "log", '\"', exp(x.log), '\"')
-Base.show(io::IO, x::AbstractLogNumber{F}) where {F} = print(io, "Log(", F, ", ", exp(x.log), ")")
+Base.show(io::IO, x::Union{LogFloat32,LogFloat64}) = print(io, "log", '\"', exp(logvalue(x)), '\"')
+Base.show(io::IO, x::AbstractLogNumber{F}) where {F} = print(io, "Log(", F, ", ", exp(logvalue(x)), ")")
 
 include("literal_macro.jl")
 
@@ -58,9 +57,6 @@ Base.log(x::AbstractLogNumber) = LogNumber(log(logvalue(x)))
 # See the following pages for explanation:
 # http://www.nowozin.net/sebastian/blog/streaming-log-sum-exp-computation.html
 # https://www.xarg.org/2016/06/the-log-sum-exp-trick-in-machine-learning/
-
-infty(::Type{T}) where {T} = one(T) / zero(T)
-infty(::T) where {T} = infty(T)
 
 logsumexp(xs) = logsumexp(xs, eltype(xs))
 
