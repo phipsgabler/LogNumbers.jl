@@ -80,4 +80,11 @@ function expsum_update(x, acc)
     end
 end
 
+
+# Random value generation
+Base.rand(rng::AbstractRNG, ::Type{L}) where {L<:PrimitiveLogNumber} =
+    reinterpret(L, rand(rng, floattype(L)))
+Base.rand(rng::AbstractRNG, ::Type{WrappedLogNumber{F}}) where {F<:AbstractFloat} =
+    WrappedLogNumber{F}(rand(rng, F))
+
 end
