@@ -2,41 +2,50 @@ using LogNumbers
 using Base.Test
 
 @testset "Conversions" begin
-    x = 42.0
+    for x ∈ [Float64(42), Float32(42), Float16(42)]
+        for F ∈ [Float64, Float32, Float16]
+            L = logtype(F)
+            
+            l = convert(L, x)
+            f = convert(F, Log(x))
+            
+            @test f ≈ x
+            @test logvalue(l) ≈ log(x)
+            @test floattype(l) == F
+            @test l isa L
+            @test f isa F
+        end
+    end
     
-    r1 = convert(LogFloat64, x)
-    r2 = convert(LogFloat32, x)
-    r3 = convert(Float64, Log(x))
-    r4 = convert(Float32, Log(x))
-    @test logvalue(r1) ≈ log(x)
-    @test floattype(r1) == Float64 == typeof(x)
-    @test logvalue(r2) ≈ log(x)
-    @test floattype(r2) == Float32
-    @test r3 ≈ x
-    @test typeof(r3) == Float64 == typeof(x)
-    @test r4 ≈ x
-    @test typeof(r4) == Float32
-
     # promote(Log(32f1), Log(32e1))
     # promote(Log(32f1), 32e1)
     # promote(32f1, Log(32e1))
 end
 
-@testset "Constants, literals, equality" begin
-    @test LogZero == LogNumber(Float64, -Inf) == Log(0) == zero(LogFloat64)
-    @test iszero(LogZero)
-    @test Log(1) == LogNumber(Float64, 0.0) == one(LogFloat64)
-
-    @test Log(Inf) == LogInf
-    @test isinf(LogInf)
-
-    @test isequal(Log(NaN), LogNaN)
-    @test Log(NaN) != LogNaN
-    @test isnan(LogNaN)
-
+@testset "Literals" begin
     @test log"32" == Log(32)
+    @test log"32" isa logtype(32)
+
     @test log"32e1" == Log(32e1)
+    @test log"32e1" isa logtype(32e1)
+
     @test log"32f1" == Log(32f1)
+    @test log"32f1" isa logtype(32f1)
+end
+
+@testset "Constants, equality" begin
+    for F ∈ [Float64, Float32, Float16]
+        @test LogZero == LogNumber(Float64, -Inf) == Log(0) == zero(LogFloat64)
+        @test iszero(LogZero)
+        @test Log(1) == LogNumber(Float64, 0.0) == one(LogFloat64)
+
+        @test Log(Inf) == LogInf
+        @test isinf(LogInf)
+
+        @test isequal(Log(NaN), LogNaN)
+        @test Log(NaN) != LogNaN
+        @test isnan(LogNaN)
+    end
 end
 
 @testset "Addition, subtraction" begin
