@@ -1,8 +1,7 @@
-__precompile__()
+module LogNumbers
 
 import Base
-
-module LogNumbers
+import Random
 
 export LogNumber, Log, 
     floattype, logsumexp
@@ -22,12 +21,13 @@ Base.:(==)(x::AbstractLogNumber, y::AbstractLogNumber) = logvalue(x) == logvalue
 Base.isequal(x::AbstractLogNumber, y::AbstractLogNumber) = isequal(logvalue(x), logvalue(y))
 Base.hash(x::AbstractLogNumber, h) = hash(logvalue(x), hash(typeof(x), h))
 
-Base.isapprox(x::AbstractLogNumber, y::AbstractLogNumber; args...) = isapprox(logvalue(x), logvalue(y); args...)
+Base.isapprox(x::AbstractLogNumber, y::AbstractLogNumber; args...) =
+    isapprox(logvalue(x), logvalue(y); args...)
 Base.eps(::Type{<:AbstractLogNumber{F}}) where F = Base.eps(F) # is this the right thing? 
 
 Base.:<(x::AbstractLogNumber, y::AbstractLogNumber) = logvalue(x) < logvalue(y)
 Base.:<=(x::AbstractLogNumber, y::AbstractLogNumber) = logvalue(x) <= logvalue(y)
-Base.less(x::AbstractLogNumber, y::AbstractLogNumber) = less(logvalue(x), logvalue(y))
+Base.isless(x::AbstractLogNumber, y::AbstractLogNumber) = isless(logvalue(x), logvalue(y))
 
 Base.isinf(x::AbstractLogNumber) = isinf(logvalue(x)) && logvalue(x) > 0
 Base.isnan(x::AbstractLogNumber) = isnan(logvalue(x))
@@ -61,12 +61,12 @@ Base.log(x::AbstractLogNumber) = LogNumber(log(logvalue(x)))
 logsumexp(xs) = logsumexp(xs, eltype(xs))
 
 function logsumexp(xs, ::Type{<:AbstractLogNumber{F}}) where {F}
-    α, r = mapfoldr(logvalue, expsum_update, (-infty(F), zero(F)), xs)
+    α, r = mapfoldr(logvalue, expsum_update, xs, init = (-infty(F), zero(F)))
     LogNumber(log(r) + α)
 end
 
 function logsumexp(xs, ::Type{F}) where {F}
-    α, r = mapfoldr(identity, expsum_update, (-infty(F), zero(F)), xs)
+    α, r = mapfoldr(identity, expsum_update, xs, init = (-infty(F), zero(F)))
     log(r) + α
 end
 
@@ -82,9 +82,9 @@ end
 
 
 # Random value generation
-Base.rand(rng::AbstractRNG, ::Type{L}) where {L<:PrimitiveLogNumber} =
+Random.rand(rng::Random.AbstractRNG, ::Random.SamplerType{L}) where {L<:PrimitiveLogNumber} =
     reinterpret(L, rand(rng, floattype(L)))
-Base.rand(rng::AbstractRNG, ::Type{WrappedLogNumber{F}}) where {F<:AbstractFloat} =
+Random.rand(rng::Random.AbstractRNG, ::Random.SamplerType{WrappedLogNumber{F}}) where {F<:AbstractFloat} =
     WrappedLogNumber{F}(rand(rng, F))
 
 end

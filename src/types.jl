@@ -47,7 +47,7 @@ LogNumber(x) = LogNumber(float(x))
 LogNumber(::Type{F}, x) where {F<:AbstractFloat} = LogNumber(convert(F, x))
 
 # convert and log transform with implicit log transformation
-Base.convert(::Type{L}, x) where {L<:AbstractLogNumber} =
+Base.convert(::Type{L}, x::Number) where {L<:AbstractLogNumber} =
     reinterpret(L, log(convert(floattype(L), x)))
 
 Log(x::F) where {F<:AbstractFloat} = convert(logtype(F), x)
@@ -57,7 +57,7 @@ Log(::Type{F}, x) where {F<:AbstractFloat} = Log(convert(F, x))
 # converting back to normal space with exp
 Base.convert(::Type{L}, x::AbstractLogNumber) where {L<:AbstractLogNumber} =
     LogNumber(convert(floattype(L), logvalue(x)))
-Base.convert(::Type{T}, x::AbstractLogNumber) where {T} = convert(T, exp(logvalue(x)))
+Base.convert(::Type{T}, x::AbstractLogNumber) where {T<:Number} = convert(T, exp(logvalue(x)))
 
 Base.promote_rule(::Type{S}, ::Type{T}) where {S<:AbstractLogNumber, T<:AbstractLogNumber} =
     logtype(promote_type(floattype(S), floattype(T)))

@@ -1,5 +1,5 @@
 using LogNumbers
-using Base.Test
+using Test
 
 @testset "Conversions" begin
     for x ∈ [Float64(42), Float32(42), Float16(42)]
@@ -38,8 +38,8 @@ end
 
     # zero and inf constants
     for (logzero, loginf, F) ∈ zip([LogZero64, LogZero32, LogZero16],
-                                [LogInf64, LogInf32, LogInf16],
-                                [Float64, Float32, Float16])
+                                   [LogInf64, LogInf32, LogInf16],
+                                   [Float64, Float32, Float16])
         L = logtype(F)
         @test logzero == zero(L)
         @test loginf == infty(L)
