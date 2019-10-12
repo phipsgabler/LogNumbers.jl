@@ -1,3 +1,5 @@
+[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
+
 # LogNumbers
 
 [![Build Status](https://travis-ci.org/phipsgabler/LogNumbers.jl.svg?branch=master)](https://travis-ci.org/phipsgabler/LogNumbers.jl)
